@@ -13,7 +13,7 @@ router.post('/register', (req, res) => {
   
   Users.add(user)
     .then(id => {
-      res.status(201).json({ message: `User registered: ${user.username} has an id of ${id.id}`})  
+      res.status(201).json({ message: `User registered: ${user.username} has an id of ${id.id}`, token})  
     })
     .catch(error => {
       res.status(500).json( {message: `Error adding new user: ${error}`} );
@@ -21,7 +21,20 @@ router.post('/register', (req, res) => {
 });
 
 router.post('/login', (req, res) => {
-  // implement login
+  let { username, password } = req.body;
+
+  Users.getByName({ username })
+    .then(user => {
+      if(user && bcrypt.compareSync(password, user.password)) {
+        const token = generateToken(user);
+        res.status(200).json({ token, user, message: `Welcome, ${user.username}!`})
+      } else {
+        res.status(401).json({message: "Invalid credentials"})
+      }
+    })
+    .catch(err => {
+      res.status(500).json({message: `There was an error with the server: ${err}`})
+    })
 });
 
 function generateToken(user) {
